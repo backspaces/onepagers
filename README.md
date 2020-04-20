@@ -10,6 +10,10 @@ It works by creating a properties object describing how to "draw" the model.
 
 It is very experimental and it is showing me lots of issues. That's what this is all about, right?
 
+See the repo ghpage: https://backspaces.github.io/virus/
+
+Run the model: https://backspaces.github.io/virus/virus.html
+
 # Init:
 
 -   cd ~/src
