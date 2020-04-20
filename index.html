@@ -1,0 +1,43 @@
+<html>
+    <head>
+        <title>Virus</title>
+    </head>
+    <body>
+        <script type="module">
+            import Model from './VirusModel.js'
+            import run from './runModel.js'
+
+            // Use TwoDraw. Default parameters are:
+            //   patchColor: undefined, // random gray
+            //   turtleColor: undefined, // random color
+            //   linkColor: 'white',
+            //   linkWidth: 1,
+            //   shape: 'dart',
+            //   shapeSize: 1,
+            // See overrides in drawOptions below
+
+            const turtleColors = {
+                infected: 'red',
+                susceptible: 'blue',
+                resistant: 'gray',
+            }
+
+            // run(Model, viewOptions = {}, drawOptions = {})
+            run(
+                Model,
+                { div: 'modelDiv', patchSize: 8 },
+                {
+                    // patchColor: 'black',
+                    turtleColor: (t) => turtleColors[t.state],
+                    shape: 'circle',
+                    // shapeSize: 1.5,
+                    linkColor: 'rgba(255, 255, 255, 0.50',
+                }
+            )
+        </script>
+
+        <!-- divs for model and text.  -->
+        <div id="modelDiv"></div>
+        <div id="textDiv"></div>
+    </body>
+</html>

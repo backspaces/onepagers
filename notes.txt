@@ -1,0 +1,33 @@
+mkdir virus
+cd virus
+code .
+touch notes.txt
+
+copy/modify VirusModel.js index.html from AS; server.js from Josh
+
+files are:
+VirusModel.js	// From agentscript/models, imports modified
+index.html	  // Imports VirusModel, creates View & Draw options for run()
+runModel.js	  // An async runner: run(ModelClass, ViewOptions, DrawOptions)
+
+also:
+notes.txt     // this file
+server.js     // Josh's http server
+
+run via: node < server.js &
+Open console for debug info
+
+Turn into git repo:
+git init
+
+echo ' # ignore these in the repo
+node_modules/
+npm-debug.log
+yarn-error.log
+**/.DS_Store' > .gitignore
+
+echo "# New Repo" >> README.md
+git add .
+git commit -m "first commit"
+
+
