@@ -17,6 +17,9 @@ server.js     // Josh's http server
 run via: node < server.js &
 Open console for debug info
 
+......................................................................
+Workflow:
+
 Turn into git repo:
 git init
 
@@ -30,4 +33,21 @@ echo "# New Repo" >> README.md
 git add .
 git commit -m "first commit"
 
+github:
+    https://github.com/backspaces/
+    +: new repository .. virus
+    https://github.com/backspaces/virus
+git remote add origin https://github.com/backspaces/virus.git
+git push -u origin master
+<create ghpage in master>
+  https://github.com/backspaces/virus/settings
+  scroll down to GitHub Pages, source: master, theme:
+to get page metadata locally: git pull origin master
+See it here:
+  https://backspaces.github.io/virus/
 
+rinse and repeat:
+  git add .
+  git status
+  git commit
+  git push -u origin master
