@@ -12,9 +12,9 @@ It is very experimental and it is showing me lots of issues. That's what this is
 
 See the repo: https://github.com/backspaces/virus
 
-See the repo ghpage: https://backspaces.github.io/virus/
+Run the model using TwoView: https://backspaces.github.io/virus/
 
-Run the model: https://backspaces.github.io/virus/virus.html
+Add any queryString to use TwoDraw: https://backspaces.github.io/virus/?foo
 
 # Init:
 
