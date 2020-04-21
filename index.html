@@ -6,9 +6,11 @@
         <script type="module">
             import Model from './VirusModel.js'
             import run from './runModel.js'
-            const useTwoDraw = false
 
+            // Use any query string to use TwoDraw, otherwise use TwoView
+            const useTwoDraw = window.location.search.length > 0
             console.log('useTwoDraw:', useTwoDraw)
+
             run(Model, { div: 'modelDiv', patchSize: 8 }, useTwoDraw).then(
                 (sample) => {
                     console.log('done, sample', sample)

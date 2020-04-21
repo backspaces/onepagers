@@ -49,9 +49,9 @@ Run via:
 # Workflow:
 
 Turn into git repo:
-git init
 
 ```
+git init
 echo ' # ignore these in the repo
 node_modules/
 npm-debug.log
