@@ -1,0 +1,62 @@
+<html>
+    <head>
+        <title>PrefAttach</title>
+    </head>
+    <body>
+        <script type="module">
+            import {
+                World,
+                Model,
+                util,
+            } from 'https://backspaces.github.io/agentscript/dist/agentscript.esm.js'
+            import TwoView from 'https://backspaces.github.io/agentscript/src/TwoView.js'
+            import ColorMap from 'https://backspaces.github.io/agentscript/src/ColorMap.js'
+
+            class PrefAttachModel extends Model {
+                constructor() {
+                    super(World.defaultOptions(45))
+                }
+                setup() {
+                    let [t1, t2] = this.turtles.create(2)
+                    this.links.create(t1, t2)
+                }
+                step() {
+                    const partner = this.links.oneOf().bothEnds().oneOf()
+                    this.turtles.create(1, (t) => {
+                        this.links.create(t, partner)
+                    })
+                    this.turtles.layoutCircle(model.world.maxX * 0.95)
+                }
+            }
+
+            const model = new PrefAttachModel()
+            model.setup()
+            // Use the model's world for the view:
+            const view = new TwoView(model.world, { patchSize: 8 })
+
+            util.toWindow({ model, view, util })
+
+            const colorMap = ColorMap.Basic16
+            function draw() {
+                view.clear('black')
+                view.drawLinks(model.links, { color: 'white' })
+                view.drawTurtles(model.turtles, (t) => ({
+                    shape: 'circle',
+                    // +2 avoid white on top
+                    // .css: colorMap use Color.typedColor's, thus need css type
+                    color: colorMap.atIndex(t.id + 2).css,
+                    size: Math.sqrt(t.linkNeighbors().length),
+                }))
+            }
+
+            util.timeoutLoop(
+                () => {
+                    model.step()
+                    draw()
+                },
+                500,
+                33
+            ).then(() => console.log('done'))
+        </script>
+    </body>
+</html>

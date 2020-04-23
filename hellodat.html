@@ -57,7 +57,8 @@
             const gui = new dat.GUI()
             gui.add(model, 'speed', 0, 2)
             gui.add(model, 'wiggle', 0, 1)
-
+            // patchSize requires resetting the view, so uses a command
+            gui.add(view, 'patchSize', 2, 25).onChange((val) => view.reset(val))
             window.pause = false // modules do not have a "this", use window. sigh!
             gui.add(window, 'pause')
 
