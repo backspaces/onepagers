@@ -1,54 +1,34 @@
 # What is this:
 
-This is a single page repo showing how to integrate a model with a view.
+Hey, welcome!
 
-It uses a new approach for drawing a model in the AS tests/ dir:
+This is a collection of one page AgemtScript models along with their views and additional tools from the [AgentScript repo](https://github.com/backspaces/agentscript).
 
-    import TwoDraw from 'https://backspaces.github.io/agentscript/tests/TwoDraw.js'
+Here's the onepagers repo: [https://github.com/backspaces/onepager](https://github.com/backspaces/onepager)
 
-It works by creating a properties object describing how to "draw" the model.
+## Here's how to start a git project, like this one:
 
-It is very experimental and it is showing me lots of issues. That's what this is all about, right?
+```
+cd ~/src
+mkdir onepagers
+cd onepagers
+touch README.md
+copy/install a server for locally testing.
+```
 
-See the repo: https://github.com/backspaces/virus
+I grabbed a very simple & readable, server.js, from Redfish. You can copy it from the onepagers repo.
 
-Run the model using TwoView: https://backspaces.github.io/virus/
+Run it via:
 
-Add any queryString to use TwoDraw: https://backspaces.github.io/virus/?foo
+```
+node < server.js &
+browser: http://localhost:9000/\<my model\>.html
+Open console for debug info
+```
 
-# Init:
+## Workflow:
 
--   cd ~/src
--   mkdir virus
--   cd virus
--   code .
--   touch README.md
-
-Then
-
--   copy/modify VirusModel.js index.html from AS;
--   server.js from Josh
-
-Files are:
-
--   VirusModel.js: From agentscript/models, imports modified
--   index.html: Imports VirusModel, creates View & Draw options for run()
--   runModel.js: An async runner: run(ModelClass, ViewOptions, DrawOptions)
-
-Also:
-
--   README.md // this file
--   server.js // Josh's http server
-
-Run via:
-
--   node < server.js &
--   browser: http://localhost:9000/virus.html .. or whatever page you wan
--   Open console for debug info
-
-# Workflow:
-
-Turn into git repo:
+Turn your directory into git repo:
 
 ```
 git init
@@ -66,22 +46,28 @@ git add .
 git commit -m "first commit"
 ```
 
-Integrate with github:
+## Integrate with github:
+
+Go to your github account, for me https://github.com/backspaces/
+
+Use the + button to add a new repo in my case onepagers. This creates [https://github.com/backspaces/onepagers](https://github.com/backspaces/onepagers)
+
+Connect your local git repo with github:
 
 ```
-https://github.com/backspaces/
-    +: new repository .. virus
-    https://github.com/backspaces/virus
-git remote add origin https://github.com/backspaces/virus.git
+git remote add origin https://github.com/backspaces/onepagers.git
 git push -u origin master
-<create ghpage in master>
-    https://github.com/backspaces/virus/settings
-    scroll down to GitHub Pages, source: master, theme:
-to get page metadata locally:
-    git pull origin master
 ```
 
-See it here: https://backspaces.github.io/virus/
+Make your repo also a github page: go to: https://github.com/backspaces/onepagers/settings
+
+scroll down to GitHub Pages, source: master, theme: set to one you like
+
+Then to get page metadata locally:
+
+    git pull origin master
+
+See it here: [https://backspaces.github.io/onepagers/](https://backspaces.github.io/onepagers/)
 
 Rinse and repeat:
 
