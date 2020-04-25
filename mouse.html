@@ -1,0 +1,93 @@
+<html>
+    <head>
+        <title>Mouse</title>
+    </head>
+    <body>
+        <script type="module">
+            import {
+                World,
+                Model,
+                util,
+            } from 'https://backspaces.github.io/agentscript/dist/agentscript.esm.js'
+            import TwoView from 'https://backspaces.github.io/agentscript/src/TwoView.js'
+            import ColorMap from 'https://backspaces.github.io/agentscript/src/ColorMap.js'
+            import Mouse from 'https://backspaces.github.io/agentscript/src/Mouse.js'
+
+            class MouseModel extends Model {
+                constructor() {
+                    super(World.defaultOptions()) // Default "NL" world
+                    Object.assign(this, {
+                        population: 20,
+                    })
+                }
+                setup() {
+                    const { patches, turtles, links } = this
+                    // this is sorta slick NL use. Can easily be two liner.
+                    patches.nOf(20).ask((p) => p.sprout(1))
+
+                    // again, kinda slick, can be broken into a couple of lines.
+                    turtles.ask((t) => links.create(t, turtles.otherOneOf(t)))
+                }
+                step() {}
+            }
+
+            const model = new MouseModel()
+            model.setup()
+            // Use the model's world for the view:
+            const view = new TwoView(model.world, { patchSize: 15 })
+            const mouse = new Mouse(
+                view.canvas,
+                model.world,
+                handleMouse
+            ).start()
+
+            util.toWindow({ model, view, util })
+
+            let selectedTurtle, selectedLink
+            function handleMouse(mouse) {
+                const { x, y, action } = mouse
+                switch (action) {
+                    case 'down':
+                        selectedTurtle = model.turtles.closestTurtle(x, y, 2)
+                        break
+                    case 'drag':
+                        if (selectedTurtle) selectedTurtle.setxy(x, y)
+                        break
+                    case 'move':
+                        selectedLink = model.links.minOneOf((l) =>
+                            l.distanceXY(x, y)
+                        )
+                        break
+                    case 'up':
+                        selectedTurtle = null
+                        break
+                }
+                draw()
+            }
+
+            const colorMap = ColorMap.Bright16
+            function draw() {
+                view.clear('black')
+                view.drawLinks(model.links, (l) => ({
+                    color: l === selectedLink ? 'red' : 'gray',
+                    width: 2,
+                }))
+                view.drawTurtles(model.turtles, (t) => ({
+                    shape: 'circle',
+                    color: colorMap.atIndex(t.id).css,
+                    size: 1,
+                }))
+            }
+            draw()
+
+            // util.timeoutLoop(
+            //     () => {
+            //         model.step()
+            //         draw()
+            //     },
+            //     -1,
+            //     33
+            // ).then(() => console.log('done'))
+        </script>
+    </body>
+</html>
