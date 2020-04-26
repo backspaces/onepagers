@@ -35,7 +35,7 @@
                     this.turtles.ask((t) => {
                        t.y = (this.plotType == 'line') ?
                         this.m * t.x + this.b 
-                        : t.y = this.b + this.L / (1 + Math.exp( -1 * this.k * (t.x - this.x0 ) ))
+                        : this.b + this.L / (1 + Math.exp( -1 * this.k * (t.x - this.x0 ) ))
                     })
                 }
             }
