@@ -1,0 +1,91 @@
+<html>
+    <head>
+        <title>PlotLogistic</title>
+    </head>
+    <body>
+        <script type="module">
+            import {
+                World,
+                Model,
+                util,
+            } from 'https://backspaces.github.io/agentscript/dist/agentscript.esm.js'
+            import TwoView from 'https://backspaces.github.io/agentscript/src/TwoView.js'
+            import ColorMap from 'https://backspaces.github.io/agentscript/src/ColorMap.js'
+            import Color from 'https://backspaces.github.io/agentscript/src/Color.js'
+            import dat from 'https://unpkg.com/dat.gui/build/dat.gui.module.js'
+
+            class plotLogistic extends Model {
+                constructor() {
+                    super(World.defaultOptions(100,100)) // Default "NL" world
+                    Object.assign(this, {
+                        population: 300,
+                        m: 0.1,
+                        L: this.world.maxY / 2.0,
+                        b: -1 * this.world.maxY / 4.0,
+                        k: 0.2,
+                        x0:1,
+                        plotType:'logistic'
+                    })
+                }
+                setup() {
+                    this.turtles.setDefault('atEdge', 'bounce')
+                    this.patches.with(p=>p.y==0).ask(p=>p.sprout(1))
+                }
+                step() {
+                    this.turtles.ask((t) => {
+                       t.y = (this.plotType == 'line') ?
+                        this.m * t.x + this.b 
+                        : t.y = this.b + this.L / (1 + Math.exp( -1 * this.k * (t.x - this.x0 ) ))
+                    })
+                }
+            }
+
+            const model = new plotLogistic()
+            model.setup()
+
+            // Use the model's world for the view:
+            const view = new TwoView(model.world, { patchSize: 3 })
+            const axisColor = Color.typedColor(0,90,0).pixel
+            const backgroundColor = Color.typedColor('black').pixel
+            const grayColor = Color.typedColor(25,25,25).pixel
+
+            //setupView
+            view.createPatchPixels(i => backgroundColor)
+            view.setPatchesPixels(model.patches, p => p.y == 0 || p.x == 0  
+                ? axisColor 
+                : parseInt((p.y + model.world.maxY ) / 10) % 2 == parseInt( (p.x + model.world.maxX) / 10) % 2  ? grayColor : backgroundColor)
+
+            function draw() {
+                view.clear('black')
+                view.drawPatches()
+                view.drawTurtles(model.turtles, (t) => ({
+                    shape: 'circle',
+                    color: 'red',
+                    size: 1,
+                }))
+            }
+
+            // https://github.com/dataarts/dat.gui
+            const gui = new dat.GUI()
+            gui.add(model, 'plotType', [ 'line', 'logistic' ] )
+            gui.add(model, 'm', -5, 5)
+            gui.add(model, 'b', -1 * model.world.maxY / 2, model.world.maxY / 2)
+            gui.add(model, 'L', -1 * model.world.maxY / 2, model.world.maxY / 2)
+            gui.add(model, 'x0', -20, 20)
+            gui.add(model, 'k', -1.25, 1.25)
+            window.pause = false
+
+            util.toWindow({ model, view, gui })
+
+            util.timeoutLoop(
+                () => {
+                    if (pause) return
+                    model.step()
+                    draw()
+                },
+                -1, // -1 means go forever, use "pause" to start/stop
+                33
+            ).then(() => console.log('done'))
+        </script>
+    </body>
+</html>
