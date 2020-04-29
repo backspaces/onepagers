@@ -1,0 +1,80 @@
+<html>
+    <head>
+        <title>Hello</title>
+    </head>
+    <body>
+        <script type="module">
+            // Add two images to the standard paths/shapes: redfish & twitter
+            // Run in Hello model.
+            import {
+                World,
+                Model,
+                util,
+            } from 'https://backspaces.github.io/agentscript/dist/agentscript.esm.js'
+            import TwoView from 'https://backspaces.github.io/agentscript/src/TwoView.js'
+            import Shapes from 'https://backspaces.github.io/agentscript/src/Shapes.js'
+            import ColorMap from 'https://backspaces.github.io/agentscript/src/ColorMap.js'
+
+            class HelloModel extends Model {
+                constructor() {
+                    super(World.defaultOptions()) // Default "NL" world
+                    Object.assign(this, {
+                        population: 100,
+                        speed: 0.1,
+                        wiggle: 0.1,
+                    })
+                }
+                setup() {
+                    this.turtles.setDefault('atEdge', 'bounce')
+                    this.turtles.create(this.population, t => {
+                        const patch = this.patches.oneOf()
+                        t.setxy(patch.x, patch.y)
+                    })
+                    this.turtles.ask(t => {
+                        this.links.create(t, this.turtles.otherOneOf(t))
+                    })
+                }
+                step() {
+                    this.turtles.ask(t => {
+                        t.direction += util.randomCentered(this.wiggle)
+                        t.forward(this.speed)
+                    })
+                }
+            }
+
+            const shapes = new Shapes()
+            async function addImages() {
+                await shapes.imagePathPromise('tweet', './data/twitter.png')
+                await shapes.imagePathPromise('redfish', './data/redfish.png')
+            }
+
+            addImages().then(() => {
+                const colorMap = ColorMap.Bright16
+                const shapeNames = shapes.getPathNames() // will include images
+
+                const model = new HelloModel()
+                model.setup()
+                // Use the model's world for the view:
+                const view = new TwoView(model.world, { patchSize: 20 })
+                function draw() {
+                    view.clear('black')
+                    view.drawLinks(model.links, { color: 'white' })
+                    view.drawTurtles(model.turtles, t => ({
+                        shape: shapeNames[t.id % shapeNames.length],
+                        color: colorMap.atIndex(t.id).css,
+                        size: 2.5,
+                    }))
+                }
+
+                util.timeoutLoop(
+                    () => {
+                        model.step()
+                        draw()
+                    },
+                    500,
+                    33
+                ).then(() => console.log('done'))
+            })
+        </script>
+    </body>
+</html>
