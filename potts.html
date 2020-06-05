@@ -1,0 +1,206 @@
+<html>
+    <head>
+        <title>Hello</title>
+    </head>
+    <body>
+        <div id="modelDiv"></div>
+        <script type="module">
+            // Add two images to the standard paths/shapes: redfish & twitter
+                // Run in Hello model.
+                import {
+                    World,
+                    Model,
+                    util,
+                } from 'https://backspaces.github.io/agentscript/dist/agentscript.esm.js'
+                import TwoDraw from 'https://backspaces.github.io/agentscript/src/TwoDraw.js'
+                import TwoView from 'https://backspaces.github.io/agentscript/src/TwoView.js'
+                import Shapes from 'https://backspaces.github.io/agentscript/src/Shapes.js'
+                import ColorMap from 'https://backspaces.github.io/agentscript/src/ColorMap.js'
+                import Color from 'https://backspaces.github.io/agentscript/src/Color.js'
+
+
+                export default class DiffuseModel extends Model {
+                    static defaultOptions() {
+                        return {
+                            population: 2,
+                            speed: 0.5,
+                            wiggle: 0.1,
+                            radius: 6,
+                            targetArea: 100,
+                            diffuseRate: 0.05,
+                            seedDelta: 0.1,
+                            seedMax: 0.8,
+                        }
+                    }
+
+                    // ======================
+
+                    constructor(worldOptions = World.defaultOptions(128, 128)) {
+                        super(worldOptions)
+                        Object.assign(this, DiffuseModel.defaultOptions())
+                    }
+
+                    setup() {
+                        this.patches.ask(p => {
+                            p.concentration = (p.x/400)**2 + (Math.sin(p.y/100))**2
+                            p.cellType = 0
+                            if (p.x >= -5 && p.x<5 && p.y >= -5 && p.y < 5) {
+                                p.cellType = 1
+                            }
+                            if (p.x > -60 && p.x< -40 && p.y > -10 && p.y < 10) {
+                                p.cellType = 2
+                            }
+                            // p.ds = 0
+                        })
+                    }
+
+                    step() {
+                        console.time('step')
+                        let nrg1 = this.calcEnergy()
+                        for(let i = 0;i<10000;i++){
+                            let p1 = this.patches.oneOf()
+                            let p2 = p1.neighbors4.oneOf()
+                            if(p1.cellType != p2.cellType) { // for efficiancy
+                                const oldP2Celltype = p2.cellType
+                                p2.cellType = p1.cellType
+                                let nrg2 = this.calcEnergy()
+                                let dNrg = nrg2 - nrg1
+                                let prob = (Math.random() < Math.exp(-dNrg/0.2))
+                                if(dNrg < 0 || prob){
+                                    nrg1 = nrg2 // leave change
+                                    console.log(dNrg,prob)
+                                } else { // undo change
+                                    p2.cellType = oldP2Celltype
+                                }
+                                // console.log(dNrg)
+                            }
+                        }
+                        console.timeEnd('step')
+                    }
+
+            
+
+
+                    calcEnergy(lambda=0.2) {
+                        let totalTerm1 = 0
+                        this.patches.ask((p)=>{
+                            let J = this.adhesion(p)
+                            totalTerm1 += J
+                        })
+                        let totalTerm2 = 0
+                        for (let i=1;i<=2; i++) { // iterate through cell types. 
+                            let vdelta = (this.getAreaOfType(i) - this.targetArea)**2
+                            totalTerm2 += vdelta
+                        }
+                        let total = totalTerm1 + lambda*totalTerm2
+                        return total
+                        // let t1 = 
+                    }
+
+                    adhesion(p1) {
+                        let total = 0
+                        p1.neighbors4.ask((pnei)=>{
+                            if(p1.cellType == pnei.cellType) total += 0.0 // kronicker delta part of equation
+                            else if(p1.cellType == 0 || pnei.cellType == 0 ) total += 0.1 // one is empty
+                            else total += 0.2 // different cell types
+                        })
+                        return total
+                    }
+
+
+
+                    askPatchesOfType(cellType, func) {
+                        return this.patches.ask(p => { if(p.cellType == cellType) func(p)})
+                    }
+
+                    getAreaOfType(type) {
+                        let area = 0
+                        this.askPatchesOfType(type, (p) => {
+                            area = area + 1
+                            })
+                        return area
+                    }
+
+                    getPerimeterOfType(type) {
+                        let surface = 0
+                        this.askPatchesOfType(type, (p) => {
+                            let uncounted = p.neighbors4.filter((p2)=>{
+                                const isEmpty = p2.cellType != p.cellType
+                                return isEmpty
+                            })
+                            if(uncounted) surface += uncounted.length 
+                        })
+                        return surface
+                    }
+
+
+                }
+
+/**
+
+DRAWING
+
+*/
+                const patchColors = ColorMap.Jet
+                const useSmoothing = true // unusual to have non-crisp patches
+                const shape = 'dart'
+                const shapeSize = 8
+
+                const viewOptions = { patchSize: 3 }
+
+                function newView(model, options = {}) {
+                    const view = new TwoView(model.world, Object.assign(viewOptions, options))
+                    view.setPatchesSmoothing(useSmoothing)
+                    return view
+                }
+
+                function drawView(model, view) {
+                    view.drawPatches(
+                        model.patches,
+                        (p) => {
+                            // if (p.cellType != 0) return [255,0,0,255]
+                            let color = patchColors.scaleColor(p.concentration, -1, 1).pixel
+                            if(p.cellType > 0) color = Color.typedColor(222, 184, 135).pixel
+                            return color
+                        }
+                    )
+                    view.drawTurtles(model.turtles, t => ({
+                        shape: shape,
+                        color: 'red',
+                        size: shapeSize,
+                    }))
+                }
+
+/**
+
+Run the model
+*/
+                async function run() {
+                    const model = new DiffuseModel()
+                    window.model = model // debug
+                    await model.startup()
+                    model.setup()
+
+                    const view = new TwoDraw(model, {
+                        div: 'modelDiv',
+                        useSprites: true,
+                        patchSize: 3,
+                    })
+
+                    await util.timeoutLoop(
+                        () => {
+                            model.step()
+                            model.tick()
+                            drawView(model, view)
+                        },
+                        500,
+                        33
+                    )
+                }
+                run()
+
+
+            
+        </script>
+    </body>
+</html>
