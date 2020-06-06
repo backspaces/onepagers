@@ -1,209 +1,205 @@
 <html>
     <head>
-        <title>Hello</title>
+        <title>Cellular Potts Model</title>
     </head>
     <body>
         <div id="modelDiv"></div>
         <script type="module">
-            // Add two images to the standard paths/shapes: redfish & twitter
-                // Run in Hello model.
                 import {
-                    World,
-                    Model,
-                    util,
-                } from 'https://backspaces.github.io/agentscript/dist/agentscript.esm.js'
-                import TwoDraw from 'https://backspaces.github.io/agentscript/src/TwoDraw.js'
-                import TwoView from 'https://backspaces.github.io/agentscript/src/TwoView.js'
-                import Shapes from 'https://backspaces.github.io/agentscript/src/Shapes.js'
-                import ColorMap from 'https://backspaces.github.io/agentscript/src/ColorMap.js'
-                import Color from 'https://backspaces.github.io/agentscript/src/Color.js'
+                        World,
+                        Model,
+                        util,
+                    } from 'https://backspaces.github.io/agentscript/dist/agentscript.esm.js'
+                    import TwoDraw from 'https://backspaces.github.io/agentscript/src/TwoDraw.js'
+                    import TwoView from 'https://backspaces.github.io/agentscript/src/TwoView.js'
+                    import Shapes from 'https://backspaces.github.io/agentscript/src/Shapes.js'
+                    import ColorMap from 'https://backspaces.github.io/agentscript/src/ColorMap.js'
+                    import Color from 'https://backspaces.github.io/agentscript/src/Color.js'
 
 
-                export default class DiffuseModel extends Model {
-                    static defaultOptions() {
-                        return {
-                            population: 2,
-                            speed: 0.5,
-                            wiggle: 0.1,
-                            radius: 6,
-                            targetArea: 200,
-                            diffuseRate: 0.05,
-                            seedDelta: 0.1,
-                            seedMax: 0.8,
-                        }
-                    }
-
-                    // ======================
-
-                    constructor(worldOptions = World.defaultOptions(128, 128)) {
-                        super(worldOptions)
-                        Object.assign(this, DiffuseModel.defaultOptions())
-                    }
-
-                    setup() {
-                        this.cells = [{followGradient:false}]
-                        this.patches.ask(p => {
-                            p.concentration = (p.x/128)**2 + (Math.cos(p.y/64))**2
-                            p.cellID = 0
-                        })
-                        this.patches.inRadius(this.patches.patchXY(45,-21),3).ask(p=>{
-                            p.concentration = -1
-                        })
-                   
-                        this.addCell(-40,40,5)
-                        this.addCell(-50,12,5)
-                        this.addCell(30,-30,5)
-                        this.addCell(50,-30,5, true)
-                        this.addCell(30,-20,5)
-                    }
-
-                    addCell(x,y, r=10, followGradient = true) {
-                        let id = this.cells.length
-                        this.cells.push({followGradient, color:Color.randomTypedColor()})
-                        this.patches.inRadius(this.patches.patchXY(x,y),r).ask(p=>{
-                            p.cellID = id
-                        })
-                        
-                    }
-
-                    step() {
-                        const T = 0.01  // Boltzmann temperature ???
-                        const mu = 50 // strength of chemical gradient following behavior
-                        const steplets = 30
-                        console.time('step')
-                        let nrg1 = this.calcEnergy()
-                        let edges = this.patches.filter((a)=>{
-                                let diff = false
-                                a.neighbors4.ask((b)=>{
-                                    if (a.cellID != b.cellID) diff = true
-                                })
-                                return diff 
-                            })
-                        for(let i = 0;i<steplets;i++){ // do a lot of tries before drawing for speed
-                            let p1 = edges.oneOf()
-                            let p2 = p1.neighbors4.oneOf()
-                            if(p1.cellID != p2.cellID) { // for efficiancy only move if cellIDs differ
-                                const oldP2CellID = p2.cellID
-                                p2.cellID = p1.cellID
-                                let nrg2 = this.calcEnergy()
-                                let dNrg1 = nrg2 - nrg1
-                                let chemoGradient = p2.concentration - p1.concentration
-                                let dNrg2 = dNrg1 - (mu * chemoGradient)
-                                let prob = (Math.random() < Math.exp(-dNrg2/T))
-                                if(dNrg2 < 0 || prob){
-                                    nrg1 = nrg2 // keep change
-                                } else { //
-                                    p2.cellID = oldP2CellID // undo change
-                                }
-                                // console.log(dNrg)
+                    export default class DiffuseModel extends Model {
+                        static defaultOptions() {
+                            return {
+                                population: 2,
+                                speed: 0.5,
+                                wiggle: 0.1,
+                                radius: 6,
+                                targetArea: 200,
+                                diffuseRate: 0.05,
+                                seedDelta: 0.1,
+                                seedMax: 0.8,
                             }
                         }
-                        console.timeEnd('step')
-                    }
 
-                    calcEnergy(lambda=0.2) {
-                        let totalTerm1 = 0
-                        this.patches.ask((p)=>{
-                            let J = this.adhesion(p)
-                            totalTerm1 += J
-                        })
-                        let totalTerm2 = 0
-                        let areas = this.getAreas()
-                        for (let i=1;i<this.cells.length; i++) { // iterate through cell types. 
-                            let vdelta = (areas[i] - this.targetArea)**2
-                            totalTerm2 += vdelta
+                        constructor(worldOptions = World.defaultOptions(128, 128)) {
+                            super(worldOptions)
+                            Object.assign(this, DiffuseModel.defaultOptions())
                         }
-                        let total = totalTerm1 + lambda*totalTerm2
-                        return total
-                        // let t1 = 
-                    }
 
-                    adhesion(p1) {
-                        let total = 0
-                        p1.neighbors4.ask((pnei)=>{
-                            if(p1.cellID == pnei.cellID) total += 0.0 // kronicker delta part of equation
-                            else if(p1.cellID == 0 || pnei.cellID == 0 ) total += 0.08 // one is empty
-                            else total += 0.4 // different cell types
-                        })
-                        return total
-                    }
+                        setup() {
+                            this.cells = [{ followGradient: false }]
+                            this.patches.ask(p => {
+                                p.concentration = (p.x / 128) ** 2 + (Math.cos(p.y / 64)) ** 2
+                                p.cellID = 0
+                            })
+                            this.patches.inRadius(this.patches.patchXY(45, -21), 3).ask(p => {
+                                p.concentration = -1
+                            })
 
-                    getAreas() {
-                        const areas = []
-                        this.patches.ask(p=>{
-                            if (!areas[p.cellID]) areas[p.cellID] = 0
-                            areas[p.cellID] ++
-                        })
-                        return areas
-                    }
-
-                }
-
-/**
-
-DRAWING
-
-*/
-                const patchColors = ColorMap.Jet
-                const useSmoothing = true // unusual to have non-crisp patches
-                const shape = 'dart'
-                const shapeSize = 8
-
-                const viewOptions = { patchSize: 3 }
-
-                function newView(model, options = {}) {
-                    const view = new TwoView(model.world, Object.assign(viewOptions, options))
-                    view.setPatchesSmoothing(useSmoothing)
-                    return view
-                }
-
-                function drawView(model, view) {
-                    view.drawPatches(
-                        model.patches,
-                        (p) => {
-                            // if (p.cellID != 0) return [255,0,0,255]
-                            let color = patchColors.scaleColor(p.concentration, 0, 2).pixel
-                            if(p.cellID > 0) color = model.cells[p.cellID].color.pixel
-                            return color
+                            this.addCell(-40, 40, 5)
+                            this.addCell(-50, 12, 5)
+                            for (let y=0; y<10; y++){
+                                for(let x = 0; x<10; x++){
+                                    this.addCell(10*x, 10*y,4)
+                                }
+                            }
                         }
-                    )
-                    view.drawTurtles(model.turtles, t => ({
-                        shape: shape,
-                        color: 'red',
-                        size: shapeSize,
-                    }))
-                }
 
-/**
+                        addCell(x, y, r = 10, followGradient = true) {
+                            let id = this.cells.length
+                            this.cells.push({ followGradient, color: Color.randomTypedColor() })
+                            this.patches.inRadius(this.patches.patchXY(x, y), r).ask(p => {
+                                p.cellID = id
+                            })
 
-Run the model
-*/
-                async function run() {
-                    const model = new DiffuseModel()
-                    window.model = model // debug
-                    await model.startup()
-                    model.setup()
+                        }
 
-                    const view = new TwoDraw(model, {
-                        div: 'modelDiv',
-                        useSprites: true,
-                        patchSize: 3,
-                    })
+                        step() {
+                            const T = 0.01  // Boltzmann temperature ???
+                            const mu = 50 // strength of chemical gradient following behavior
+                            const steplets = 3000
+                            console.time('step')
+                            let nrg1 = this.calcEnergy()
+                            // let edges = this.patches.filter((a) => {
+                            //     let diff = false
+                            //     a.neighbors4.ask((b) => {
+                            //         if (a.cellID != b.cellID) diff = true
+                            //     })
+                            //     return diff
+                            // })
+                            for (let i = 0; i < steplets; i++) { // do a lot of tries before drawing for speed
+                                let p1 = this.patches.oneOf()
+                                let p2 = p1.neighbors4.oneOf()
+                                if (p1.cellID != p2.cellID) { // for efficiancy only move if cellIDs differ
+                                    const oldP2CellID = p2.cellID
+                                    p2.cellID = p1.cellID
+                                    let nrg2 = this.calcEnergy()
+                                    let dNrg1 = nrg2 - nrg1
+                                    let chemoGradient = p2.concentration - p1.concentration
+                                    let dNrg2 = dNrg1 - (mu * chemoGradient)
+                                    let prob = (Math.random() < Math.exp(-dNrg2 / T))
+                                    if (dNrg2 < 0 || prob) {
+                                        nrg1 = nrg2 // keep change
+                                    } else { //
+                                        p2.cellID = oldP2CellID // undo change
+                                    }
+                                    // console.log(dNrg)
+                                }
+                            }
+                            console.timeEnd('step')
+                        }
 
-                    await util.timeoutLoop(
-                        () => {
-                            model.step()
-                            model.tick()
-                            drawView(model, view)
-                        },
-                        1000,
-                        15
-                    )
-                }
-                run()
+                        calcEnergy(lambda = 0.2) {
+                            let totalTerm1 = 0
+                            this.patches.ask((p) => {
+                                let J = this.adhesion(p)
+                                totalTerm1 += J
+                            })
+                            let totalTerm2 = 0
+                            let areas = this.getAreas()
+                            for (let i = 1; i < this.cells.length; i++) { // iterate through cell types. 
+                                let vdelta = (areas[i] - this.targetArea) ** 2
+                                totalTerm2 += vdelta
+                            }
+                            let total = totalTerm1 + lambda * totalTerm2
+                            return total
+                            // let t1 = 
+                        }
 
+                        adhesion(p1) {
+                            let total = 0
+                            p1.neighbors4.ask((pnei) => {
+                                if (p1.cellID == pnei.cellID) total += 0.0 // kronicker delta part of equation
+                                else if (p1.cellID == 0 || pnei.cellID == 0) total += 0.08 // one is empty
+                                else total += 0.4 // different cell types
+                            })
+                            return total
+                        }
 
-            
+                        getAreas() {
+                            const areas = []
+                            this.patches.ask(p => {
+                                if (!areas[p.cellID]) areas[p.cellID] = 0
+                                areas[p.cellID]++
+                            })
+                            return areas
+                        }
+
+                    }
+
+                    /**
+                    
+                    DRAWING
+                    
+                    */
+                    const patchColors = ColorMap.Jet
+                    const useSmoothing = true // unusual to have non-crisp patches
+                    const shape = 'dart'
+                    const shapeSize = 8
+
+                    const viewOptions = { patchSize: 3 }
+
+                    function newView(model, options = {}) {
+                        const view = new TwoView(model.world, Object.assign(viewOptions, options))
+                        view.setPatchesSmoothing(useSmoothing)
+                        return view
+                    }
+
+                    function drawView(model, view) {
+                        view.drawPatches(
+                            model.patches,
+                            (p) => {
+                                // if (p.cellID != 0) return [255,0,0,255]
+                                let color = patchColors.scaleColor(p.concentration, 0, 2).pixel
+                                if (p.cellID > 0) color = model.cells[p.cellID].color.pixel
+                                return color
+                            }
+                        )
+                        view.drawTurtles(model.turtles, t => ({
+                            shape: shape,
+                            color: 'red',
+                            size: shapeSize,
+                        }))
+                    }
+
+                    /**
+                    
+                    Run the model
+                    */
+                    async function run() {
+                        const model = new DiffuseModel()
+                        window.model = model // debug
+                        await model.startup()
+                        model.setup()
+
+                        const view = new TwoDraw(model, {
+                            div: 'modelDiv',
+                            useSprites: true,
+                            patchSize: 3,
+                        })
+
+                        await util.timeoutLoop(
+                            () => {
+                                model.step()
+                                model.tick()
+                                drawView(model, view)
+                            },
+                            10000,
+                            15
+                        )
+                    }
+                    run()
+
         </script>
     </body>
 </html>
