@@ -26,7 +26,7 @@
                             speed: 0.5,
                             wiggle: 0.1,
                             radius: 6,
-                            targetArea: 100,
+                            targetArea: 300,
                             diffuseRate: 0.05,
                             seedDelta: 0.1,
                             seedMax: 0.8,
@@ -42,9 +42,9 @@
 
                     setup() {
                         this.patches.ask(p => {
-                            p.concentration = (p.x/400)**2 + (Math.sin(p.y/100))**2
+                            p.concentration = (p.x/128)**2 + (Math.cos(p.y/64))**2
                             p.cellType = 0
-                            if (p.x >= -5 && p.x<5 && p.y >= -5 && p.y < 5) {
+                            if (p.x >= -5 && p.x<5 && p.y >= -70 && p.y < -60) {
                                 p.cellType = 1
                             }
                             if (p.x > -60 && p.x< -40 && p.y > -10 && p.y < 10) {
@@ -55,22 +55,26 @@
                     }
 
                     step() {
+                        const T = 0.01  // Boltzmann temperature ???
+                        const mu = 50 // strength of chemical gradient following behavior
+                        const steplets = 30000
                         console.time('step')
                         let nrg1 = this.calcEnergy()
-                        for(let i = 0;i<10000;i++){
+                        for(let i = 0;i<steplets;i++){ // do a lot of tries before drawing for speed
                             let p1 = this.patches.oneOf()
                             let p2 = p1.neighbors4.oneOf()
-                            if(p1.cellType != p2.cellType) { // for efficiancy
+                            if(p1.cellType != p2.cellType) { // for efficiancy only move if celltypes differ
                                 const oldP2Celltype = p2.cellType
                                 p2.cellType = p1.cellType
                                 let nrg2 = this.calcEnergy()
-                                let dNrg = nrg2 - nrg1
-                                let prob = (Math.random() < Math.exp(-dNrg/0.2))
-                                if(dNrg < 0 || prob){
-                                    nrg1 = nrg2 // leave change
-                                    console.log(dNrg,prob)
-                                } else { // undo change
-                                    p2.cellType = oldP2Celltype
+                                let dNrg1 = nrg2 - nrg1
+                                let chemoGradient = p2.concentration - p1.concentration
+                                let dNrg2 = dNrg1 - (mu * chemoGradient)
+                                let prob = (Math.random() < Math.exp(-dNrg2/T))
+                                if(dNrg2 < 0 || prob){
+                                    nrg1 = nrg2 // keep change
+                                } else { //
+                                    p2.cellType = oldP2Celltype // undo change
                                 }
                                 // console.log(dNrg)
                             }
