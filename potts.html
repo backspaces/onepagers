@@ -4,7 +4,13 @@
     </head>
     <body>
         <div id="modelDiv"></div>
+        <div></div>
         <script type="module">
+            /**
+
+                Cellular Potts model in Agent Script. 
+                Cody Smith 2020
+            */
                 import {
                         World,
                         Model,
@@ -20,17 +26,13 @@
                     export default class DiffuseModel extends Model {
                         static defaultOptions() {
                             return {
-                                population: 2,
-                                speed: 0.5,
-                                wiggle: 0.1,
-                                radius: 6,
-                                diffuseRate: 0.05,
-                                seedDelta: 0.1,
-                                seedMax: 0.8,
+                                T:0.01, //Boltzman temperature 
+                                mu:60, // constant for how strong to follow chemical gradient
+                                lambda:0.2,
                             }
                         }
 
-                        constructor(worldOptions = World.defaultOptions(128, 128)) {
+                        constructor(worldOptions = World.defaultOptions(48,48)) {
                             super(worldOptions)
                             Object.assign(this, DiffuseModel.defaultOptions())
                         }
@@ -38,18 +40,17 @@
                         setup() {
                             this.cells = [{ followGradient: false }]
                             this.patches.ask(p => {
-                                p.concentration = (p.x / 128) ** 2 + (Math.cos(p.y / 64)) ** 2
+                                p.concentration = (p.x+p.y+48*2)/96
                                 p.cellID = 0
                             })
-                            this.patches.inRadius(this.patches.patchXY(45, -21), 3).ask(p => {
-                                p.concentration = -1
-                            })
 
-                            this.addCell(-40, 40, 9)
-                            this.addCell(-50, 12, 9)
-                            for (let y=0; y<10; y++){
-                                for(let x = 0; x<10; x++){
-                                    this.addCell(24*x-100, 24*y-100,5)
+                            this.addCell(-40, 10, 3)
+                            this.addCell(-40, -10, 4)
+                            this.addCell(-40, -40, 4)
+                            // this.addCell(-50, 12, 9)
+                            for (let y=-40; y<40; y+=12){
+                                for(let x = -35; x<35; x+=12){
+                                    this.addCell(x+Math.round(Math.random()*10), y,3, false)
                                 }
                             }
                         }
@@ -64,18 +65,11 @@
                         }
 
                         step() {
-                            const T = 0.01  // Boltzmann temperature ???
-                            const mu = 50 // strength of chemical gradient following behavior
+                            const T = this.T  // Boltzmann temperature ???
+                            const mu = this.mu // strength of chemical gradient following behavior
                             const steplets = 3000
                             console.time('step')
                             let nrg1 = this.calcEnergy()
-                            // let edges = this.patches.filter((a) => {
-                            //     let diff = false
-                            //     a.neighbors4.ask((b) => {
-                            //         if (a.cellID != b.cellID) diff = true
-                            //     })
-                            //     return diff
-                            // })
                             for (let i = 0; i < steplets; i++) { // do a lot of tries before drawing for speed
                                 let p1 = this.patches.oneOf()
                                 let p2 = p1.neighbors4.oneOf()
@@ -85,6 +79,7 @@
                                     let nrg2 = this.calcEnergy()
                                     let dNrg1 = nrg2 - nrg1
                                     let chemoGradient = p2.concentration - p1.concentration
+                                    if(!this.cells[p1.cellID].followGradient) chemoGradient = 0
                                     let dNrg2 = dNrg1 - (mu * chemoGradient)
                                     let prob = (Math.random() < Math.exp(-dNrg2 / T))
                                     if (dNrg2 < 0 || prob) {
@@ -98,7 +93,8 @@
                             console.timeEnd('step')
                         }
 
-                        calcEnergy(lambda = 0.2) {
+                        calcEnergy() {
+                            const lambda = this.lambda
                             let totalTerm1 = 0
                             this.patches.ask((p) => {
                                 let J = this.adhesion(p)
@@ -112,7 +108,6 @@
                             }
                             let total = totalTerm1 + lambda * totalTerm2
                             return total
-                            // let t1 = 
                         }
 
                         adhesion(p1) {
@@ -200,5 +195,29 @@
                     run()
 
         </script>
+        <div>
+            <h1>
+                Cellular Potts Model
+            </h1>
+            <h3>Cody Smith 2020</h3>
+            <br>
+            This simulation is intended to be a proof of concept. 
+            It is trying to imitate this <a href="https://www.youtube.com/watch?v=JnlULOjUhSQ">video</a> of 
+            a neutrophil chasing a staph bacteria through a group of cells . 
+            <br>
+            There are 2 kinds of cells. The moving ones are gradient following cells (neutrophils). They are trying to follow the gradient reperesented by the ranbow background. There are several smaller cells in the way, which are ignoring the chemical gradient. 
+            The neutropuil cells need to squeeze and shove around the other cells in order to get to the upper left corner.
+            <br>
+            This is currently being run on a 96x96 cell grid.
+
+            <br>
+            <ul>
+                <li>It is based on the Wikipedia description of the metropolis style Cellular Potts model found here, <a href="https://en.wikipedia.org/wiki/Cellular_Potts_model">https://en.wikipedia.org/wiki/Cellular_Potts_model</a></li>
+                <li>The original video <a href="https://www.youtube.com/watch?v=JnlULOjUhSQ">https://www.youtube.com/watch?v=JnlULOjUhSQ</a></li>
+            </ul>
+
+            <hr>
+
+        </div>
     </body>
 </html>
