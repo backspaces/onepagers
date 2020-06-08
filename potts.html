@@ -24,7 +24,6 @@
                                 speed: 0.5,
                                 wiggle: 0.1,
                                 radius: 6,
-                                targetArea: 200,
                                 diffuseRate: 0.05,
                                 seedDelta: 0.1,
                                 seedMax: 0.8,
@@ -46,18 +45,18 @@
                                 p.concentration = -1
                             })
 
-                            this.addCell(-40, 40, 5)
-                            this.addCell(-50, 12, 5)
+                            this.addCell(-40, 40, 9)
+                            this.addCell(-50, 12, 9)
                             for (let y=0; y<10; y++){
                                 for(let x = 0; x<10; x++){
-                                    this.addCell(10*x, 10*y,4)
+                                    this.addCell(24*x-100, 24*y-100,5)
                                 }
                             }
                         }
 
                         addCell(x, y, r = 10, followGradient = true) {
                             let id = this.cells.length
-                            this.cells.push({ followGradient, color: Color.randomTypedColor() })
+                            this.cells.push({ followGradient, color: Color.randomTypedColor(), targetArea: 3.14*r*r })
                             this.patches.inRadius(this.patches.patchXY(x, y), r).ask(p => {
                                 p.cellID = id
                             })
@@ -108,7 +107,7 @@
                             let totalTerm2 = 0
                             let areas = this.getAreas()
                             for (let i = 1; i < this.cells.length; i++) { // iterate through cell types. 
-                                let vdelta = (areas[i] - this.targetArea) ** 2
+                                let vdelta = (areas[i] - this.cells[i].targetArea) ** 2
                                 totalTerm2 += vdelta
                             }
                             let total = totalTerm1 + lambda * totalTerm2
