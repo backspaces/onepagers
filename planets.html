@@ -11,10 +11,10 @@
                 Model,
                 util,
             } from 'https://backspaces.github.io/agentscript/dist/agentscript.esm.js'
-            import TwoView from 'https://backspaces.github.io/agentscript/src/TwoView.js'
+            // import TwoView from 'https://backspaces.github.io/agentscript/src/TwoView.js'
             import Shapes from 'https://backspaces.github.io/agentscript/src/Shapes.js'
             import ColorMap from 'https://backspaces.github.io/agentscript/src/ColorMap.js'
-
+            import TwoDraw from 'https://backspaces.github.io/agentscript/src/TwoDraw.js'
             /**
             Use ORB.js to display the planets
 
@@ -65,14 +65,19 @@
             util.toWindow({ model, util, World })
 
             // Use the model's world for the view:
-            const view = new TwoView(model.world, { patchSize: 8 })
+            const view = new TwoDraw(model, { div:'modelDiv',patchSize: 8 })
             function draw() {
                 view.clear('black')
-                view.drawTurtles(model.turtles, t => ({
-                    shape: 'circle',
-                    color: colorMap.atIndex(t.id).css,
-                    size: 1,
-                }))
+                view.draw({
+                    turtleShape: 'circle',
+                    turtleColor: 'random',
+                    turtleSize: 1,
+                    patchColor: 'black',
+                    textProperty: 'planetName',
+                    textColor: 'white',
+                    textSize: 1,
+
+                })
             }
 
             util.timeoutLoop(
@@ -85,8 +90,7 @@
             ).then(() => console.log('done'))
             
         </script>
-        <div id='dateDiv'>
-
-        </div>
+        <div id='modelDiv'></div>
+        <div id='dateDiv'></div>
     </body>
 </html>
