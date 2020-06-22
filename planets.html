@@ -1,0 +1,96 @@
+<html>
+    <head>
+        <title>ORB.js test model</title>
+    </head>
+    <body>
+        <script src="https://cdn.jsdelivr.net/gh/lizard-isana/orb.js@2.3/build/orb.v2.js"></script>
+
+        <script type="module">
+            import {
+                World,
+                Model,
+                util,
+            } from 'https://backspaces.github.io/agentscript/dist/agentscript.esm.js'
+            // import TwoView from 'https://backspaces.github.io/agentscript/src/TwoView.js'
+            import Shapes from 'https://backspaces.github.io/agentscript/src/Shapes.js'
+            import ColorMap from 'https://backspaces.github.io/agentscript/src/ColorMap.js'
+            import TwoDraw from 'https://backspaces.github.io/agentscript/src/TwoDraw.js'
+            /**
+            Use ORB.js to display the planets
+
+            */
+            class PlanetModel extends Model {
+                constructor() {
+                    super(World.defaultOptions(36,36)) // Default "NL" world
+                    this.planets = ["Sun","Mercury","Venus","Earth",/*"Moon"*/,"Mars","Jupiter","Saturn","Uranus","Neptune"]
+                    this.date = new Date();
+                }
+                setup() {
+                    this.turtles.setDefault('atEdge', 'bounce')
+                    this.planets.forEach(name=>{
+                        this.turtles.create(1, t => {
+                            const patch = this.patches.oneOf()
+                            t.setxy(0,0)
+                            t.planetName = name
+                        })
+                    })
+                }
+                step() {
+                    this.turtles.ask(t => {
+                        try{
+                            let xyz
+                            if (t.planetName == 'Sun'){
+                                t.x=t.y=0
+                            } else{
+                                const planet = new Orb.VSOP(t.planetName);
+                                xyz = planet.xyz(this.date); // ecliptic rectangular coordinates(x, y, z)
+                                t.x=xyz.x 
+                                t.y=xyz.y 
+                            }
+                          
+                            document.getElementById('dateDiv').innerHTML = `${this.date.toISOString()}`
+                            this.date.setDate(this.date.getDate() + 1)
+                        } catch(err) {
+                            console.error(err)
+                        }
+                    })
+                }
+            }
+
+            const shapes = new Shapes()
+            const colorMap = ColorMap.Bright16
+            const model = new PlanetModel()
+            model.setup()
+
+            util.toWindow({ model, util, World })
+
+            // Use the model's world for the view:
+            const view = new TwoDraw(model, { div:'modelDiv',patchSize: 8 })
+            function draw() {
+                view.clear('black')
+                view.draw({
+                    turtleShape: 'circle',
+                    turtleColor: 'random',
+                    turtleSize: 1,
+                    patchColor: 'black',
+                    textProperty: 'planetName',
+                    textColor: 'white',
+                    textSize: 1,
+
+                })
+            }
+
+            util.timeoutLoop(
+                () => {
+                    model.step()
+                    draw()
+                },
+                9000,
+                33
+            ).then(() => console.log('done'))
+            
+        </script>
+        <div id='modelDiv'></div>
+        <div id='dateDiv'></div>
+    </body>
+</html>
