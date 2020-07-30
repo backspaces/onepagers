@@ -4,12 +4,11 @@
     </head>
     <body>
         <script type="module">
-            import {
-                World,
-                Model,
-                util,
-            } from 'https://backspaces.github.io/agentscript/dist/agentscript.esm.js'
-            import TwoView from 'https://backspaces.github.io/agentscript/src/TwoView.js'
+            import World from 'https://agentscript.org/src/World.js'
+            import Model from 'https://agentscript.org/src/Model.js'
+            import util from 'https://agentscript.org/src/util.js'
+            import TwoDraw from 'https://agentscript.org/src/TwoDraw.js'
+
             import dat from 'https://unpkg.com/dat.gui/build/dat.gui.module.js'
 
             class HelloModel extends Model {
@@ -23,16 +22,16 @@
                 }
                 setup() {
                     this.turtles.setDefault('atEdge', 'bounce')
-                    this.turtles.create(this.population, (t) => {
+                    this.turtles.create(this.population, t => {
                         const patch = this.patches.oneOf()
                         t.setxy(patch.x, patch.y)
                     })
-                    this.turtles.ask((t) => {
+                    this.turtles.ask(t => {
                         this.links.create(t, this.turtles.otherOneOf(t))
                     })
                 }
                 step() {
-                    this.turtles.ask((t) => {
+                    this.turtles.ask(t => {
                         t.direction += util.randomCentered(this.wiggle)
                         t.forward(this.speed)
                     })
@@ -41,24 +40,24 @@
 
             const model = new HelloModel()
             model.setup()
-            // Use the model's world for the view:
-            const view = new TwoView(model.world, { patchSize: 20 })
-            function draw() {
-                view.clear('black')
-                view.drawLinks(model.links, { color: 'white' })
-                view.drawTurtles(model.turtles, (t) => ({
-                    shape: 'dart',
-                    color: 'red',
-                    size: 1,
-                }))
-            }
+
+            const view = new TwoDraw(
+                model,
+                { patchSize: 20 },
+                {
+                    patchesColor: 'black',
+                    linksColor: 'white',
+                    turtlesColor: 'red',
+                }
+            )
 
             // https://github.com/dataarts/dat.gui
             const gui = new dat.GUI()
             gui.add(model, 'speed', 0, 2)
             gui.add(model, 'wiggle', 0, 1)
+
             // patchSize requires resetting the view, so uses a command
-            gui.add(view, 'patchSize', 2, 25).onChange((val) => view.reset(val))
+            gui.add(view, 'patchSize', 2, 25).onChange(val => view.reset(val))
             window.pause = false // modules do not have a "this", use window. sigh!
             gui.add(window, 'pause')
 
@@ -68,7 +67,7 @@
                 () => {
                     if (pause) return
                     model.step()
-                    draw()
+                    view.draw()
                 },
                 -1, // -1 means go forever, use "pause" to start/stop
                 33
