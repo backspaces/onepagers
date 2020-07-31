@@ -36,16 +36,16 @@ export default async function run(Model, viewOptions = {}, useTwoDraw = true) {
 
     if (!useTwoDraw)
         // setup static patches colors. Done by default in TwoDraw
-        view.createPatchPixels((i) => ColorMap.DarkGray.randomColor().pixel)
+        view.createPatchPixels(i => ColorMap.DarkGray.randomColor().pixel)
 
     await util.timeoutLoop(
         () => {
             model.step()
-            model.tick()
+            // model.tick()
 
             if (useTwoDraw) {
                 view.draw({
-                    turtleColor: (t) => turtleColors[t.state],
+                    turtleColor: t => turtleColors[t.state],
                     shape: 'circle',
                     shapeSize: 1.5,
                     linkColor: 'rgba(255, 255, 255, 0.50',
@@ -57,7 +57,7 @@ export default async function run(Model, viewOptions = {}, useTwoDraw = true) {
                     color: 'rgba(255, 255, 255, 0.50',
                     width: 1,
                 })
-                view.drawTurtles(model.turtles, (t) => ({
+                view.drawTurtles(model.turtles, t => ({
                     shape: 'circle',
                     color: turtleColors[t.state],
                     size: 1.5,
